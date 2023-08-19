@@ -1,0 +1,50 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    command: >
+      bash -c "python manage.py migrate && uwsgi --http 0.0.0.0:${APP_SERVER_PORT} --module bpb.wsgi"
+    env_file:
+      - .env
+    volumes:
+      - static_volume:/web/files_static
+      - media_volume:/web/files_media
+    ports:
+      - "${APP_SERVER_PORT}:${APP_SERVER_PORT}"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
+      - static_volume:/files_static
+      - media_volume:/files_media
+    env_file:
+      - .env
+    ports:
+      - "${HOST_SERVER_PORT}:${NGINX_SERVER_PORT}"
+    depends_on:
+      - web
+    networks:
+      - app-network
+    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+
+  db:
+    image: postgres:latest
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
