@@ -13,19 +13,20 @@ WORKDIR /web
 COPY requirements.txt .
 
 # Install dependencies including uwsgi
-RUN apt-get update \
-    && apt-get install -y netcat \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
         build-essential \
         python3-dev \
-        libpcre3-dev \
-    && pip install --no-cache-dir -r requirements.txt \
-    && apt-get purge -y --auto-remove build-essential python3-dev libpcre3-dev \
-    && rm -rf /var/lib/apt/lists/*
+        libpcre3-dev
+RUN pip install -I -r requirements.txt --no-cache-dir
+RUN apt install -y netcat-traditional
+# RUN apt-get purge -y --auto-remove build-essential python3-dev libpcre3-dev
+RUN rm -rf /var/lib/apt/lists/*
 
 
 # copy the project code
 COPY . .
+COPY bpb/settings/local_prod.py /web/bpb/settings/local.py
 
 # prepare scripts to run
 #COPY ./basesite/fixtures/install_fixtures.sh .
